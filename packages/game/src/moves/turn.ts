@@ -1,5 +1,6 @@
 import type { Move } from "boardgame.io";
-import type { GameState } from "../types";
+import type { GameState, Resource, ResourceHand } from "../types";
+import { RESOURCE_LABELS_FR } from "../types";
 import { computeProduction, applyProduction } from "../rules/production";
 
 function totalHandSize(state: GameState, playerID: string): number {
@@ -14,6 +15,7 @@ export const rollDice: Move<GameState> = ({ G, random, events }) => {
   const d2 = random.Die(6);
   const total = d1 + d2;
   G.lastDiceRoll = [d1, d2];
+  G.diceRollCounts[total] = (G.diceRollCounts[total] ?? 0) + 1;
   G.log.push(`Dés : ${d1} + ${d2} = ${total}.`);
 
   if (total === 7) {
@@ -43,6 +45,20 @@ export const rollDice: Move<GameState> = ({ G, random, events }) => {
 
   const { gains, shortages } = computeProduction(G, total);
   applyProduction(G, gains);
+
+  const gainsByPlayer = new Map<string, Partial<ResourceHand>>();
+  for (const gain of gains) {
+    const bucket = gainsByPlayer.get(gain.playerID) ?? {};
+    bucket[gain.resource] = (bucket[gain.resource] ?? 0) + gain.amount;
+    gainsByPlayer.set(gain.playerID, bucket);
+  }
+  for (const [playerID, resources] of gainsByPlayer) {
+    const parts = Object.entries(resources).map(
+      ([resource, amount]) => `${amount} ${RESOURCE_LABELS_FR[resource as Resource]}`,
+    );
+    G.log.push(`${G.players[playerID].name} reçoit ${parts.join(", ")}.`);
+  }
+
   for (const resource of shortages) {
     G.log.push(
       `Pas assez de ${resource} dans la banque : personne ne reçoit cette ressource ce tour-ci.`,

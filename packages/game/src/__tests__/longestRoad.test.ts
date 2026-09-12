@@ -53,6 +53,7 @@ function fakeState(
     longestRoadPlayerID: null,
     largestArmyPlayerID: null,
     lastDiceRoll: null,
+    diceRollCounts: {},
     trades: [],
     pendingDiscards: {},
     log: [],

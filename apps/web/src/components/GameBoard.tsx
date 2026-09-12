@@ -7,12 +7,14 @@ import ActionBar, { type BuildMode } from "./ActionBar";
 import TradeModal from "./TradeModal";
 import DiscardModal from "./DiscardModal";
 import GameLog from "./GameLog";
+import DiceStatsModal from "./DiceStatsModal";
 
 type RobberPurpose = "sevenRoll" | "knight";
 
 export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardProps<GameState>) {
   const [buildMode, setBuildMode] = useState<BuildMode>(null);
   const [tradeOpen, setTradeOpen] = useState(false);
+  const [diceStatsOpen, setDiceStatsOpen] = useState(false);
   const [robberFlow, setRobberFlow] = useState<{
     purpose: RobberPurpose;
     chosenTileId: string | null;
@@ -178,6 +180,9 @@ export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardP
             🎲 {G.lastDiceRoll[0]} + {G.lastDiceRoll[1]} = {G.lastDiceRoll[0] + G.lastDiceRoll[1]}
           </div>
         )}
+        <button className="dice-stats-button" onClick={() => setDiceStatsOpen(true)}>
+          📊 Statistiques des dés
+        </button>
       </div>
 
       <aside className="game-sidebar">
@@ -273,6 +278,10 @@ export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardP
           onMaritimeTrade={(give, amount, receive) => moves.maritimeTrade(give, amount, receive)}
           onClose={() => setTradeOpen(false)}
         />
+      )}
+
+      {diceStatsOpen && (
+        <DiceStatsModal counts={G.diceRollCounts} onClose={() => setDiceStatsOpen(false)} />
       )}
 
       {ctx.gameover && (

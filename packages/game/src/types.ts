@@ -2,6 +2,14 @@ export type Resource = "wood" | "brick" | "sheep" | "wheat" | "ore";
 
 export const RESOURCES: Resource[] = ["wood", "brick", "sheep", "wheat", "ore"];
 
+export const RESOURCE_LABELS_FR: Record<Resource, string> = {
+  wood: "bois",
+  brick: "argile",
+  sheep: "laine",
+  wheat: "blé",
+  ore: "minerai",
+};
+
 export type TerrainType = Resource | "desert";
 
 export type DevCardType =
@@ -133,6 +141,8 @@ export interface GameState {
   longestRoadPlayerID: string | null;
   largestArmyPlayerID: string | null;
   lastDiceRoll: [number, number] | null;
+  /** How many times each dice total (2-12) has been rolled this game. */
+  diceRollCounts: Record<number, number>;
   trades: TradeOffer[];
   /** Players who still need to discard after a 7 roll, mapped to how many cards they must discard. */
   pendingDiscards: Record<string, number>;
