@@ -1,0 +1,36 @@
+# Example reverse-proxy config for hosting Catan on a real domain with TLS.
+# Adjust `server_name` and the certbot-managed cert paths, then drop this in
+# /etc/nginx/sites-available/ (or your platform's equivalent) and symlink it
+# into sites-enabled/.
+#
+# Get the certificate first, e.g.:
+#   sudo certbot --nginx -d catan.example.com
+
+server {
+    listen 80;
+    server_name catan.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name catan.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/catan.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/catan.example.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+
+        # Required for the socket.io websocket connection used for
+        # real-time game state sync.
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

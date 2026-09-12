@@ -1,0 +1,20 @@
+services:
+  catan:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - catan-data:/data
+    environment:
+      PORT: 8000
+      STORAGE_DIR: /data
+      # In production the client is served from this same container/port, so
+      # CORS/SELF_URL don't need to change when you attach a domain — only
+      # set CORS_ORIGIN if the web client is ever hosted on a *different*
+      # origin than this API (e.g. during local dev it's http://localhost:5173).
+
+volumes:
+  catan-data:
