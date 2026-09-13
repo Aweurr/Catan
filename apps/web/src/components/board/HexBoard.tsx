@@ -1,11 +1,11 @@
 import type { GameState, PlayerColor, PortType, TerrainType } from "@catan/game";
 import { PLAYER_COLOR_HEX, RESOURCE_ICON, TERRAIN_COLOR } from "../../theme";
-import woodImg from "../../assets/tiles/wood.jpg";
-import brickImg from "../../assets/tiles/brick.jpg";
-import sheepImg from "../../assets/tiles/sheep.jpg";
-import wheatImg from "../../assets/tiles/wheat.jpg";
-import oreImg from "../../assets/tiles/ore.jpg";
-import desertImg from "../../assets/tiles/desert.jpg";
+import woodImg from "../../assets/tiles/wood.png";
+import brickImg from "../../assets/tiles/brick.png";
+import sheepImg from "../../assets/tiles/sheep.png";
+import wheatImg from "../../assets/tiles/wheat.png";
+import oreImg from "../../assets/tiles/ore.png";
+import desertImg from "../../assets/tiles/desert.png";
 
 interface Props {
   G: GameState;
@@ -43,19 +43,26 @@ const SETTLEMENT_PATH = "M -8,9 L -8,0 L 0,-8 L 8,0 L 8,9 Z";
  * bigger and more complex than a settlement so the two are easy to tell apart. */
 const CITY_PATH = "M -13,9 L -13,-1 L -6,-9 L 0,-3 L 6,-9 L 13,-1 L 13,9 Z";
 
-/** A small dock sign at a port vertex: a post planted at the shore holding a
- * placard with the traded resource (or an anchor for a generic 3:1 port) and
- * its rate, instead of plain floating text. */
+/** A triangular marker dropped on a coastal edge to flag a port: a small
+ * pennant shape holding the traded resource (or an anchor for a generic 3:1
+ * port) and its rate. */
+const PORT_TRIANGLE_POINTS = "0,-16 -15,11 15,11";
+
 function PortMarker({ x, y, port }: { x: number; y: number; port: PortType }) {
   const isGeneric = port === "generic";
   return (
     <g transform={`translate(${x},${y})`} style={{ pointerEvents: "none" }}>
-      <line x1={0} y1={-4} x2={0} y2={-22} stroke="#6d4c41" strokeWidth={3} strokeLinecap="round" />
-      <circle cx={0} cy={-30} r={14} fill="#eaf6ff" stroke="#0d3d66" strokeWidth={2} />
-      <text x={0} y={-26} textAnchor="middle" fontSize={13}>
+      <polygon
+        points={PORT_TRIANGLE_POINTS}
+        fill="#eaf6ff"
+        stroke="#0d3d66"
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      <text x={0} y={2} textAnchor="middle" fontSize={12}>
         {isGeneric ? "⚓" : RESOURCE_ICON[port]}
       </text>
-      <text x={0} y={-17} textAnchor="middle" fontSize={7} fontWeight={700} fill="#3e2f1c">
+      <text x={0} y={26} textAnchor="middle" fontSize={7} fontWeight={700} fill="#3e2f1c">
         {isGeneric ? "3:1" : "2:1"}
       </text>
     </g>
@@ -121,15 +128,20 @@ export default function HexBoard({
               onClick={selectable ? () => onTileClick?.(tile.id) : undefined}
             />
             <g transform={`translate(${center.x},${center.y})`} style={{ pointerEvents: "none" }}>
-              <image
-                href={TERRAIN_IMAGE[tile.terrain]}
-                x={-HEX_HALF_WIDTH}
-                y={-100}
-                width={HEX_HALF_WIDTH * 2}
-                height={200}
-                preserveAspectRatio="xMidYMid slice"
-                clipPath="url(#hex-clip)"
-              />
+              {/* The clip stays screen-aligned (pointy-top) while only the
+                  image content underneath is rotated to face the right way. */}
+              <g clipPath="url(#hex-clip)">
+                <g transform="rotate(-90)">
+                  <image
+                    href={TERRAIN_IMAGE[tile.terrain]}
+                    x={-100}
+                    y={-HEX_HALF_WIDTH}
+                    width={200}
+                    height={HEX_HALF_WIDTH * 2}
+                    preserveAspectRatio="xMidYMid slice"
+                  />
+                </g>
+              </g>
             </g>
             {tile.number !== null && (
               <g>
@@ -173,12 +185,24 @@ export default function HexBoard({
         );
       })}
 
+      {Object.values(board.edges).map((edge) => {
+        // A port belongs to a single coastal edge, but is stored on both of
+        // that edge's vertices (see assignPorts in packages/game/src/board.ts)
+        // — so a boundary edge whose two vertices agree on the same port is
+        // exactly the edge the port sits on.
+        if (edge.tileIds.length !== 1) return null;
+        const [a, b] = edge.vertexIds.map((id) => board.vertices[id]);
+        if (!a.port || a.port !== b.port) return null;
+        return (
+          <PortMarker key={edge.id} x={(a.x + b.x) / 2} y={(a.y + b.y) / 2} port={a.port} />
+        );
+      })}
+
       {vertexList.map((vertex) => {
         const building = G.buildings[vertex.id];
         const selectable = selectableVertices.has(vertex.id);
         return (
           <g key={vertex.id}>
-            {vertex.port && !building && <PortMarker x={vertex.x} y={vertex.y} port={vertex.port} />}
             {building ? (
               <g
                 transform={`translate(${vertex.x},${vertex.y})`}
