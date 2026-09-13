@@ -9,9 +9,17 @@ function nextTradeId(G: GameState): string {
 }
 
 function hasEnough(hand: ResourceHand, want: Partial<ResourceHand>): boolean {
-  return Object.entries(want).every(
-    ([resource, amount]) => hand[resource as Resource] >= (amount ?? 0),
-  );
+  return Object.entries(want).every(([resource, amount]) => {
+    const available = hand[resource as Resource];
+    // On the client, boardgame.io runs moves optimistically against the
+    // player-view-filtered state, where another player's `resources` is
+    // replaced by `{ total }` (to hide their exact hand) — none of the
+    // individual resource keys are present. Trust it in that case; the
+    // authoritative server-side run always has the real hand and is the one
+    // that actually decides whether the trade goes through.
+    if (available === undefined) return true;
+    return available >= (amount ?? 0);
+  });
 }
 
 export const offerTrade: Move<GameState> = (

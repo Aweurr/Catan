@@ -50,6 +50,12 @@ export const phases: PhaseMap<GameState> = {
       activePlayers: { currentPlayer: "roll" },
       onBegin: ({ G, ctx }) => {
         const player = G.players[ctx.currentPlayer];
+        // Guard against the player-view-filtered shape (see the comment on
+        // totalVictoryPoints) — on a client whose turn isn't beginning, these
+        // fields are `{ length }` placeholders, not real arrays.
+        if (!Array.isArray(player.devCards) || !Array.isArray(player.devCardsBoughtThisTurn)) {
+          return;
+        }
         player.devCards.push(...player.devCardsBoughtThisTurn);
         player.devCardsBoughtThisTurn = [];
       },

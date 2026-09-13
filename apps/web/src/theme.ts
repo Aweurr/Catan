@@ -1,4 +1,4 @@
-import type { PlayerColor, Resource, TerrainType } from "@catan/game";
+import type { DevCardType, PlayerColor, Resource, TerrainType } from "@catan/game";
 
 export const PLAYER_COLOR_HEX: Record<PlayerColor, string> = {
   red: "#d32f2f",
@@ -32,4 +32,20 @@ export const RESOURCE_ICON: Record<Resource, string> = {
   sheep: "🐑",
   wheat: "🌾",
   ore: "⛏️",
+};
+
+export const DEV_CARD_LABEL: Record<DevCardType, string> = {
+  knight: "Chevalier",
+  roadBuilding: "Construction de route",
+  yearOfPlenty: "Année d'abondance",
+  monopoly: "Monopole",
+  victoryPoint: "Point de victoire",
+};
+
+export const DEV_CARD_ICON: Record<DevCardType, string> = {
+  knight: "⚔️",
+  roadBuilding: "🛣️",
+  yearOfPlenty: "🎁",
+  monopoly: "💰",
+  victoryPoint: "⭐",
 };

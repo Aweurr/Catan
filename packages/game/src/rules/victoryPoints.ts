@@ -13,10 +13,19 @@ export function publicVictoryPoints(state: GameState, playerID: string): number 
   return vp;
 }
 
-/** Total VP including hidden victory point development cards, used for the win check. */
+/** Total VP including hidden victory point development cards, used for the win check.
+ *
+ * On the client, boardgame.io runs moves optimistically against the
+ * player-view-filtered state, where other players' `devCards` is replaced by
+ * `{ length }` (to keep them secret) instead of the real array. Guard against
+ * that shape here so the optimistic run doesn't throw — the authoritative
+ * server-side run always has the real array and computes the correct result.
+ */
 export function totalVictoryPoints(state: GameState, playerID: string): number {
   const player = state.players[playerID];
-  const hiddenVP = player.devCards.filter((c) => c === "victoryPoint").length;
+  const hiddenVP = Array.isArray(player.devCards)
+    ? player.devCards.filter((c) => c === "victoryPoint").length
+    : 0;
   return publicVictoryPoints(state, playerID) + hiddenVP;
 }
 

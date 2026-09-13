@@ -466,3 +466,92 @@ button.active {
   gap: 10px;
   margin-top: 16px;
 }
+
+.dev-card-stack {
+  position: absolute;
+  top: 60px;
+  right: 12px;
+  width: 52px;
+  height: 72px;
+}
+
+.dev-card-back {
+  position: absolute;
+  width: 52px;
+  height: 72px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #4a2f7a, #2e1a52);
+  border: 2px solid #f5ecd7;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dev-card-back-3 {
+  transform: translate(4px, 4px);
+}
+
+.dev-card-back-2 {
+  transform: translate(2px, 2px);
+}
+
+.dev-card-back-1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dev-card-count {
+  color: #f5ecd7;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.my-dev-cards {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 60%;
+}
+
+.dev-card-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid #23201a;
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-width: 64px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.dev-card-face-icon {
+  font-size: 20px;
+}
+
+.dev-card-face-label {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.dev-card-face-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #1565c0;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

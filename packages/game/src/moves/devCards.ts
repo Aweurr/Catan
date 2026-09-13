@@ -12,12 +12,21 @@ export const buyDevCard: Move<GameState> = ({ G, playerID, events }) => {
   if (!canAfford(G, playerID, RESOURCE_COST.devCard)) return INVALID_MOVE;
 
   pay(G, playerID, RESOURCE_COST.devCard);
-  const card = G.devCardDeck.pop() as DevCardType;
-  const player = G.players[playerID];
-  if (card === "victoryPoint") {
-    player.devCards.push(card);
-  } else {
-    player.devCardsBoughtThisTurn.push(card);
+
+  // On the client, boardgame.io runs moves optimistically against the
+  // player-view-filtered state, where devCardDeck is replaced by `{ length }`
+  // (to hide its draw order) instead of the real array — draw order is
+  // secret, so the client can't know which card comes up next. Skip the draw
+  // locally in that case; the authoritative server-side run always has the
+  // real deck and its broadcast state corrects the client's view right after.
+  if (Array.isArray(G.devCardDeck)) {
+    const card = G.devCardDeck.pop() as DevCardType;
+    const player = G.players[playerID];
+    if (card === "victoryPoint") {
+      player.devCards.push(card);
+    } else {
+      player.devCardsBoughtThisTurn.push(card);
+    }
   }
   G.log.push([logPlayer(playerID), logText(" achète une carte développement.")]);
 

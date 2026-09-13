@@ -10,6 +10,8 @@ import DiscardModal from "./DiscardModal";
 import GameLog from "./GameLog";
 import DiceStatsModal from "./DiceStatsModal";
 import ResourceIcon from "./ResourceIcon";
+import DevCardStack from "./DevCardStack";
+import MyDevCards from "./MyDevCards";
 
 type RobberPurpose = "sevenRoll" | "knight";
 
@@ -197,6 +199,11 @@ export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardP
         <button className="dice-stats-button" onClick={() => setDiceStatsOpen(true)}>
           📊 Statistiques des dés
         </button>
+        <DevCardStack count={G.devCardDeck.length} />
+        <MyDevCards
+          devCards={G.players[viewerID].devCards}
+          devCardsBoughtThisTurn={G.players[viewerID].devCardsBoughtThisTurn}
+        />
       </div>
 
       <aside className="game-sidebar">
