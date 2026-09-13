@@ -128,19 +128,15 @@ export default function HexBoard({
               onClick={selectable ? () => onTileClick?.(tile.id) : undefined}
             />
             <g transform={`translate(${center.x},${center.y})`} style={{ pointerEvents: "none" }}>
-              {/* The clip stays screen-aligned (pointy-top) while only the
-                  image content underneath is rotated to face the right way. */}
               <g clipPath="url(#hex-clip)">
-                <g transform="rotate(-90)">
-                  <image
-                    href={TERRAIN_IMAGE[tile.terrain]}
-                    x={-100}
-                    y={-HEX_HALF_WIDTH}
-                    width={200}
-                    height={HEX_HALF_WIDTH * 2}
-                    preserveAspectRatio="xMidYMid slice"
-                  />
-                </g>
+                <image
+                  href={TERRAIN_IMAGE[tile.terrain]}
+                  x={-HEX_HALF_WIDTH}
+                  y={-100}
+                  width={HEX_HALF_WIDTH * 2}
+                  height={200}
+                  preserveAspectRatio="xMidYMid slice"
+                />
               </g>
             </g>
             {tile.number !== null && (
