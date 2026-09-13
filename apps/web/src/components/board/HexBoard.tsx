@@ -1,5 +1,5 @@
 import type { GameState, PlayerColor } from "@catan/game";
-import { PLAYER_COLOR_HEX, TERRAIN_COLOR } from "../../theme";
+import { PLAYER_COLOR_HEX, TERRAIN_COLOR, TERRAIN_ICON } from "../../theme";
 
 interface Props {
   G: GameState;
@@ -15,6 +15,21 @@ interface Props {
 function isRedNumber(n: number): boolean {
   return n === 6 || n === 8;
 }
+
+/** Positions (relative to a tile's center) for the decorative terrain icons,
+ * arranged in a triangle so they never collide with the number token. */
+const ICON_OFFSETS = [
+  { x: 0, y: -52 },
+  { x: -46, y: 30 },
+  { x: 46, y: 30 },
+];
+
+/** A single-peak house silhouette, used for settlements. */
+const SETTLEMENT_PATH = "M -8,9 L -8,0 L 0,-8 L 8,0 L 8,9 Z";
+
+/** A wider, taller twin-peak building silhouette, used for cities — visibly
+ * bigger and more complex than a settlement so the two are easy to tell apart. */
+const CITY_PATH = "M -13,9 L -13,-1 L -6,-9 L 0,-3 L 6,-9 L 13,-1 L 13,9 Z";
 
 export default function HexBoard({
   G,
@@ -42,6 +57,17 @@ export default function HexBoard({
       viewBox={`${minX} ${minY} ${width} ${height}`}
       xmlns="http://www.w3.org/2000/svg"
     >
+      <defs>
+        <linearGradient id="tile-shine" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity={0.28} />
+          <stop offset="45%" stopColor="#ffffff" stopOpacity={0} />
+          <stop offset="100%" stopColor="#000000" stopOpacity={0.18} />
+        </linearGradient>
+        <filter id="building-shadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodOpacity={0.5} />
+        </filter>
+      </defs>
+
       {board.tiles.map((tile) => {
         const points = tile.vertexIds
           .map((vId) => board.vertices[vId])
@@ -65,6 +91,20 @@ export default function HexBoard({
               className={selectable ? "tile selectable" : "tile"}
               onClick={selectable ? () => onTileClick?.(tile.id) : undefined}
             />
+            <polygon points={points} fill="url(#tile-shine)" style={{ pointerEvents: "none" }} />
+            {ICON_OFFSETS.map((offset, i) => (
+              <text
+                key={i}
+                x={center.x + offset.x}
+                y={center.y + offset.y}
+                textAnchor="middle"
+                fontSize={30}
+                style={{ pointerEvents: "none" }}
+                opacity={0.9}
+              >
+                {TERRAIN_ICON[tile.terrain]}
+              </text>
+            ))}
             {tile.number !== null && (
               <g>
                 <circle cx={center.x} cy={center.y} r={22} fill="#f5ecd7" stroke="#1b1b1b" />
@@ -123,17 +163,34 @@ export default function HexBoard({
                 {vertex.port === "generic" ? "3:1" : `2:1 ${vertex.port}`}
               </text>
             )}
-            <circle
-              cx={vertex.x}
-              cy={vertex.y}
-              r={building ? (building.type === "city" ? 12 : 9) : selectable ? 9 : 5}
-              fill={building ? PLAYER_COLOR_HEX[playerColors[building.playerID]] : "#ffffff"}
-              stroke="#1b1b1b"
-              strokeWidth={building ? 2 : 1}
-              opacity={building ? 1 : selectable ? 0.95 : 0.25}
-              className={selectable ? "vertex selectable" : "vertex"}
-              onClick={selectable ? () => onVertexClick?.(vertex.id) : undefined}
-            />
+            {building ? (
+              <g
+                transform={`translate(${vertex.x},${vertex.y})`}
+                filter="url(#building-shadow)"
+                className={selectable ? "building selectable" : "building"}
+                onClick={selectable ? () => onVertexClick?.(vertex.id) : undefined}
+              >
+                <path
+                  d={building.type === "city" ? CITY_PATH : SETTLEMENT_PATH}
+                  fill={PLAYER_COLOR_HEX[playerColors[building.playerID]]}
+                  stroke={selectable ? "#f9a825" : "#1b1b1b"}
+                  strokeWidth={selectable ? 3 : 2}
+                  strokeLinejoin="round"
+                />
+              </g>
+            ) : (
+              <circle
+                cx={vertex.x}
+                cy={vertex.y}
+                r={selectable ? 9 : 5}
+                fill="#ffffff"
+                stroke="#1b1b1b"
+                strokeWidth={1}
+                opacity={selectable ? 0.95 : 0.25}
+                className={selectable ? "vertex selectable" : "vertex"}
+                onClick={selectable ? () => onVertexClick?.(vertex.id) : undefined}
+              />
+            )}
           </g>
         );
       })}

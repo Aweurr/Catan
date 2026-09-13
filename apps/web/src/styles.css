@@ -128,7 +128,8 @@ button.active {
 
 .tile.selectable,
 .edge.selectable,
-.vertex.selectable {
+.vertex.selectable,
+.building.selectable {
   cursor: pointer;
 }
 
@@ -138,6 +139,10 @@ button.active {
 
 .vertex.selectable:hover {
   opacity: 1;
+}
+
+.building.selectable:hover path {
+  filter: brightness(1.2);
 }
 
 .dice-readout {
