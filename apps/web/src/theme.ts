@@ -18,16 +18,6 @@ export const TERRAIN_COLOR: Record<TerrainType, string> = {
   desert: "#e2c88a",
 };
 
-/** Decorative icons drawn on each board tile so terrain reads as a resource, not just a color. */
-export const TERRAIN_ICON: Record<TerrainType, string> = {
-  wood: "🌲",
-  brick: "🧱",
-  sheep: "🐑",
-  wheat: "🌾",
-  ore: "⛰️",
-  desert: "🏜️",
-};
-
 export const RESOURCE_LABEL: Record<Resource, string> = {
   wood: "Bois",
   brick: "Argile",

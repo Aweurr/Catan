@@ -1,5 +1,11 @@
-import type { GameState, PlayerColor } from "@catan/game";
-import { PLAYER_COLOR_HEX, TERRAIN_COLOR, TERRAIN_ICON } from "../../theme";
+import type { GameState, PlayerColor, TerrainType } from "@catan/game";
+import { PLAYER_COLOR_HEX, TERRAIN_COLOR } from "../../theme";
+import woodImg from "../../assets/tiles/wood.jpg";
+import brickImg from "../../assets/tiles/brick.jpg";
+import sheepImg from "../../assets/tiles/sheep.jpg";
+import wheatImg from "../../assets/tiles/wheat.jpg";
+import oreImg from "../../assets/tiles/ore.jpg";
+import desertImg from "../../assets/tiles/desert.jpg";
 
 interface Props {
   G: GameState;
@@ -16,13 +22,19 @@ function isRedNumber(n: number): boolean {
   return n === 6 || n === 8;
 }
 
-/** Positions (relative to a tile's center) for the decorative terrain icons,
- * arranged in a triangle so they never collide with the number token. */
-const ICON_OFFSETS = [
-  { x: 0, y: -52 },
-  { x: -46, y: 30 },
-  { x: 46, y: 30 },
-];
+/** Illustrated artwork for each terrain, used instead of a flat color fill. */
+const TERRAIN_IMAGE: Record<TerrainType, string> = {
+  wood: woodImg,
+  brick: brickImg,
+  sheep: sheepImg,
+  wheat: wheatImg,
+  ore: oreImg,
+  desert: desertImg,
+};
+
+// Matches HEX_SIZE (the circumradius) in packages/game/src/board.ts, so this
+// bounding box lines up exactly with a tile's own polygon.
+const HEX_HALF_WIDTH = 100 * (Math.sqrt(3) / 2);
 
 /** A single-peak house silhouette, used for settlements. */
 const SETTLEMENT_PATH = "M -8,9 L -8,0 L 0,-8 L 8,0 L 8,9 Z";
@@ -58,11 +70,9 @@ export default function HexBoard({
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id="tile-shine" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity={0.28} />
-          <stop offset="45%" stopColor="#ffffff" stopOpacity={0} />
-          <stop offset="100%" stopColor="#000000" stopOpacity={0.18} />
-        </linearGradient>
+        <clipPath id="hex-clip" clipPathUnits="userSpaceOnUse">
+          <polygon points="86.6,-50 86.6,50 0,100 -86.6,50 -86.6,-50 0,-100" />
+        </clipPath>
         <filter id="building-shadow" x="-50%" y="-50%" width="200%" height="200%">
           <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodOpacity={0.5} />
         </filter>
@@ -91,20 +101,17 @@ export default function HexBoard({
               className={selectable ? "tile selectable" : "tile"}
               onClick={selectable ? () => onTileClick?.(tile.id) : undefined}
             />
-            <polygon points={points} fill="url(#tile-shine)" style={{ pointerEvents: "none" }} />
-            {ICON_OFFSETS.map((offset, i) => (
-              <text
-                key={i}
-                x={center.x + offset.x}
-                y={center.y + offset.y}
-                textAnchor="middle"
-                fontSize={30}
-                style={{ pointerEvents: "none" }}
-                opacity={0.9}
-              >
-                {TERRAIN_ICON[tile.terrain]}
-              </text>
-            ))}
+            <g transform={`translate(${center.x},${center.y})`} style={{ pointerEvents: "none" }}>
+              <image
+                href={TERRAIN_IMAGE[tile.terrain]}
+                x={-HEX_HALF_WIDTH}
+                y={-100}
+                width={HEX_HALF_WIDTH * 2}
+                height={200}
+                preserveAspectRatio="xMidYMid slice"
+                clipPath="url(#hex-clip)"
+              />
+            </g>
             {tile.number !== null && (
               <g>
                 <circle cx={center.x} cy={center.y} r={22} fill="#f5ecd7" stroke="#1b1b1b" />
