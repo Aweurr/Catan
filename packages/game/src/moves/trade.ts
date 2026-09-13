@@ -1,6 +1,7 @@
 import { INVALID_MOVE } from "boardgame.io/core";
 import type { Move } from "boardgame.io";
 import type { GameState, Resource, ResourceHand, TradeOffer } from "../types";
+import { logPlayer, logResource, logText, type LogPart } from "../log";
 import { canMaritimeTrade, applyMaritimeTrade } from "../rules/bank";
 
 function nextTradeId(G: GameState): string {
@@ -28,27 +29,60 @@ export const offerTrade: Move<GameState> = (
     give,
     want,
     status: "pending",
+    interestedPlayerIDs: [],
+    declinedPlayerIDs: [],
   };
   G.trades.push(offer);
-  G.log.push(`${G.players[playerID].name} propose un échange.`);
+  G.log.push([logPlayer(playerID), logText(" propose un échange.")]);
 };
 
-export const acceptTrade: Move<GameState> = (
-  { G, playerID },
-  tradeId: string,
-) => {
+/** A candidate recipient signals they're willing to accept these terms. The
+ * offering player picks who to actually trade with via `finalizeTrade`. */
+export const acceptTrade: Move<GameState> = ({ G, playerID }, tradeId: string) => {
   const trade = G.trades.find((t) => t.id === tradeId);
   if (!trade || trade.status !== "pending") return INVALID_MOVE;
+  if (trade.fromPlayerID === playerID) return INVALID_MOVE;
   if (trade.toPlayerIDs.length > 0 && !trade.toPlayerIDs.includes(playerID)) {
     return INVALID_MOVE;
   }
   if (!hasEnough(G.players[playerID].resources, trade.want)) return INVALID_MOVE;
-  if (!hasEnough(G.players[trade.fromPlayerID].resources, trade.give)) {
-    return INVALID_MOVE;
-  }
+  if (trade.interestedPlayerIDs.includes(playerID)) return INVALID_MOVE;
 
-  const from = G.players[trade.fromPlayerID];
-  const to = G.players[playerID];
+  trade.declinedPlayerIDs = trade.declinedPlayerIDs.filter((id) => id !== playerID);
+  trade.interestedPlayerIDs.push(playerID);
+  G.log.push([
+    logPlayer(playerID),
+    logText(" est intéressé(e) par l'échange de "),
+    logPlayer(trade.fromPlayerID),
+    logText("."),
+  ]);
+};
+
+export const rejectTrade: Move<GameState> = ({ G, playerID }, tradeId: string) => {
+  const trade = G.trades.find((t) => t.id === tradeId);
+  if (!trade || trade.status !== "pending") return INVALID_MOVE;
+  if (trade.fromPlayerID === playerID) return INVALID_MOVE;
+
+  trade.interestedPlayerIDs = trade.interestedPlayerIDs.filter((id) => id !== playerID);
+  if (!trade.declinedPlayerIDs.includes(playerID)) trade.declinedPlayerIDs.push(playerID);
+};
+
+/** Only the offering player can call this, to pick which interested player to
+ * actually exchange resources with. */
+export const finalizeTrade: Move<GameState> = (
+  { G, playerID },
+  tradeId: string,
+  withPlayerID: string,
+) => {
+  const trade = G.trades.find((t) => t.id === tradeId);
+  if (!trade || trade.status !== "pending") return INVALID_MOVE;
+  if (trade.fromPlayerID !== playerID) return INVALID_MOVE;
+  if (!trade.interestedPlayerIDs.includes(withPlayerID)) return INVALID_MOVE;
+  if (!hasEnough(G.players[playerID].resources, trade.give)) return INVALID_MOVE;
+  if (!hasEnough(G.players[withPlayerID].resources, trade.want)) return INVALID_MOVE;
+
+  const from = G.players[playerID];
+  const to = G.players[withPlayerID];
   for (const [resource, amount] of Object.entries(trade.give) as [
     Resource,
     number,
@@ -64,18 +98,8 @@ export const acceptTrade: Move<GameState> = (
     from.resources[resource] += amount;
   }
 
-  trade.status = "accepted";
   G.trades = G.trades.filter((t) => t.id !== tradeId);
-  G.log.push(`${to.name} accepte l'échange de ${from.name}.`);
-};
-
-export const rejectTrade: Move<GameState> = ({ G, playerID }, tradeId: string) => {
-  const trade = G.trades.find((t) => t.id === tradeId);
-  if (!trade) return INVALID_MOVE;
-  if (trade.toPlayerIDs.length > 0 && !trade.toPlayerIDs.includes(playerID)) {
-    return INVALID_MOVE;
-  }
-  G.trades = G.trades.filter((t) => t.id !== tradeId);
+  G.log.push([logPlayer(playerID), logText(" échange avec "), logPlayer(withPlayerID), logText(".")]);
 };
 
 export const cancelTrade: Move<GameState> = ({ G, playerID }, tradeId: string) => {
@@ -94,7 +118,13 @@ export const maritimeTrade: Move<GameState> = (
     return INVALID_MOVE;
   }
   applyMaritimeTrade(G, playerID, give, giveAmount, receive, 1);
-  G.log.push(
-    `${G.players[playerID].name} échange ${giveAmount} ${give} contre 1 ${receive} (banque/port).`,
-  );
+  const parts: LogPart[] = [
+    logPlayer(playerID),
+    logText(" échange "),
+    logResource(give, giveAmount),
+    logText(" contre "),
+    logResource(receive, 1),
+    logText(" (banque/port)."),
+  ];
+  G.log.push(parts);
 };

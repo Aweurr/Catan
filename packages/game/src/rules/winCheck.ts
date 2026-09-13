@@ -1,4 +1,5 @@
 import type { GameState } from "../types";
+import { logPlayer, logText } from "../log";
 import { winnerOf } from "./victoryPoints";
 
 interface EndGameEvent {
@@ -15,7 +16,7 @@ export function checkWinCondition({
   const winnerID = winnerOf(G);
   if (winnerID && !G.winnerID) {
     G.winnerID = winnerID;
-    G.log.push(`${G.players[winnerID].name} remporte la partie !`);
+    G.log.push([logPlayer(winnerID), logText(" remporte la partie !")]);
     events.endGame({ winnerID });
   }
 }

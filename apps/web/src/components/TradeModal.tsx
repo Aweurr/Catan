@@ -1,17 +1,13 @@
 import { useState } from "react";
 import type { GameState, Resource, ResourceHand } from "@catan/game";
 import { RESOURCES, bestRateFor } from "@catan/game";
-import { RESOURCE_LABEL } from "../theme";
+import ResourceIcon from "./ResourceIcon";
 
 interface Props {
   G: GameState;
-  displayNames: Record<string, string>;
   playerID: string;
   isCurrentPlayer: boolean;
   onOfferTrade: (give: Partial<ResourceHand>, want: Partial<ResourceHand>) => void;
-  onAcceptTrade: (tradeId: string) => void;
-  onRejectTrade: (tradeId: string) => void;
-  onCancelTrade: (tradeId: string) => void;
   onMaritimeTrade: (give: Resource, giveAmount: number, receive: Resource) => void;
   onClose: () => void;
 }
@@ -34,15 +30,36 @@ function ResourceStepper({
   );
 }
 
+function ResourcePickerRow({
+  value,
+  onChange,
+  exclude,
+}: {
+  value: Resource;
+  onChange: (r: Resource) => void;
+  exclude?: Resource;
+}) {
+  return (
+    <span className="resource-picker-row">
+      {RESOURCES.filter((r) => r !== exclude).map((r) => (
+        <button
+          key={r}
+          type="button"
+          className={"resource-picker-btn" + (r === value ? " selected" : "")}
+          onClick={() => onChange(r)}
+        >
+          <ResourceIcon resource={r} showLabel={false} />
+        </button>
+      ))}
+    </span>
+  );
+}
+
 export default function TradeModal({
   G,
-  displayNames,
   playerID,
   isCurrentPlayer,
   onOfferTrade,
-  onAcceptTrade,
-  onRejectTrade,
-  onCancelTrade,
   onMaritimeTrade,
   onClose,
 }: Props) {
@@ -51,13 +68,6 @@ export default function TradeModal({
   const [want, setWant] = useState<Partial<ResourceHand>>({});
   const [maritimeGive, setMaritimeGive] = useState<Resource>("wood");
   const [maritimeReceive, setMaritimeReceive] = useState<Resource>("brick");
-
-  const myTrades = G.trades.filter((t) => t.fromPlayerID === playerID);
-  const incomingTrades = G.trades.filter(
-    (t) =>
-      t.fromPlayerID !== playerID &&
-      (t.toPlayerIDs.length === 0 || t.toPlayerIDs.includes(playerID)),
-  );
 
   const rate = bestRateFor(G, playerID, maritimeGive);
 
@@ -73,21 +83,13 @@ export default function TradeModal({
           <section>
             <h3>Échange avec la banque / un port</h3>
             <div className="maritime-trade">
-              <select value={maritimeGive} onChange={(e) => setMaritimeGive(e.target.value as Resource)}>
-                {RESOURCES.map((r) => (
-                  <option key={r} value={r}>
-                    {RESOURCE_LABEL[r]}
-                  </option>
-                ))}
-              </select>
+              <ResourcePickerRow value={maritimeGive} onChange={setMaritimeGive} />
               <span>× {rate} →</span>
-              <select value={maritimeReceive} onChange={(e) => setMaritimeReceive(e.target.value as Resource)}>
-                {RESOURCES.filter((r) => r !== maritimeGive).map((r) => (
-                  <option key={r} value={r}>
-                    {RESOURCE_LABEL[r]}
-                  </option>
-                ))}
-              </select>
+              <ResourcePickerRow
+                value={maritimeReceive}
+                onChange={setMaritimeReceive}
+                exclude={maritimeGive}
+              />
               <button
                 disabled={hand[maritimeGive] < rate}
                 onClick={() => onMaritimeTrade(maritimeGive, rate, maritimeReceive)}
@@ -106,7 +108,7 @@ export default function TradeModal({
                 <h4>Je donne</h4>
                 {RESOURCES.map((r) => (
                   <div key={r} className="resource-row">
-                    <span>{RESOURCE_LABEL[r]}</span>
+                    <ResourceIcon resource={r} />
                     <ResourceStepper
                       value={give[r] ?? 0}
                       max={hand[r]}
@@ -119,7 +121,7 @@ export default function TradeModal({
                 <h4>Je veux</h4>
                 {RESOURCES.map((r) => (
                   <div key={r} className="resource-row">
-                    <span>{RESOURCE_LABEL[r]}</span>
+                    <ResourceIcon resource={r} />
                     <ResourceStepper
                       value={want[r] ?? 0}
                       max={19}
@@ -140,43 +142,7 @@ export default function TradeModal({
             </button>
           </section>
         )}
-
-        {myTrades.length > 0 && (
-          <section>
-            <h3>Mes offres en cours</h3>
-            {myTrades.map((t) => (
-              <div key={t.id} className="trade-offer">
-                <span>{describeTrade(t.give, t.want)}</span>
-                <button onClick={() => onCancelTrade(t.id)}>Annuler</button>
-              </div>
-            ))}
-          </section>
-        )}
-
-        {incomingTrades.length > 0 && (
-          <section>
-            <h3>Offres reçues</h3>
-            {incomingTrades.map((t) => (
-              <div key={t.id} className="trade-offer">
-                <span>
-                  {displayNames[t.fromPlayerID]} : {describeTrade(t.give, t.want)}
-                </span>
-                <button onClick={() => onAcceptTrade(t.id)}>Accepter</button>
-                <button onClick={() => onRejectTrade(t.id)}>Refuser</button>
-              </div>
-            ))}
-          </section>
-        )}
       </div>
     </div>
   );
-}
-
-function describeTrade(give: Partial<ResourceHand>, want: Partial<ResourceHand>): string {
-  const fmt = (r: Partial<ResourceHand>) =>
-    Object.entries(r)
-      .filter(([, v]) => (v ?? 0) > 0)
-      .map(([k, v]) => `${v} ${RESOURCE_LABEL[k as Resource]}`)
-      .join(", ") || "rien";
-  return `donne ${fmt(give)} contre ${fmt(want)}`;
 }

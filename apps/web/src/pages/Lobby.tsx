@@ -53,7 +53,10 @@ export default function Lobby() {
   const seats = match?.players ?? [];
   const filledCount = seats.filter((p) => p.name).length;
   const allFilled = seats.length > 0 && filledCount === seats.length;
-  const allReady = allFilled && seats.every((p) => seatData(p).ready === true);
+  // The creator (seat 0) launches the game; they don't need to mark
+  // themselves ready, only everyone else does.
+  const allReady =
+    allFilled && seats.every((p) => String(p.id) === "0" || seatData(p).ready === true);
   const creatorSeat = seats.find((p) => String(p.id) === "0");
   const started = creatorSeat ? seatData(creatorSeat).started === true : false;
   const isCreator = creds?.playerID === "0";
@@ -97,26 +100,30 @@ export default function Lobby() {
       </p>
       <ul className="seat-list">
         {seats.map((p) => {
+          const isCreatorSeat = String(p.id) === "0";
           const ready = seatData(p).ready === true;
           return (
             <li key={p.id} className={p.name ? "seat-filled" : "seat-empty"}>
               <span>
                 {p.name ?? "En attente…"}
                 {creds && String(p.id) === creds.playerID ? " (toi)" : ""}
-                {String(p.id) === "0" && p.name ? " 👑" : ""}
+                {isCreatorSeat && p.name ? " 👑" : ""}
               </span>
-              {p.name && (
-                <span className={"ready-badge" + (ready ? " ready" : "")}>
-                  {ready ? "✅ Prêt" : "⏳ Pas prêt"}
-                </span>
-              )}
+              {p.name &&
+                (isCreatorSeat ? (
+                  <span className="ready-badge">👑 Hôte</span>
+                ) : (
+                  <span className={"ready-badge" + (ready ? " ready" : "")}>
+                    {ready ? "✅ Prêt" : "⏳ Pas prêt"}
+                  </span>
+                ))}
             </li>
           );
         })}
       </ul>
 
       <div className="lobby-actions">
-        {mySeat && (
+        {mySeat && !isCreator && (
           <button className={myReady ? "active" : ""} onClick={toggleReady}>
             {myReady ? "✅ Prêt (annuler)" : "Je suis prêt"}
           </button>

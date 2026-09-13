@@ -5,9 +5,11 @@ import HexBoard from "./board/HexBoard";
 import PlayerPanel from "./player/PlayerPanel";
 import ActionBar, { type BuildMode } from "./ActionBar";
 import TradeModal from "./TradeModal";
+import TradeOffers from "./TradeOffers";
 import DiscardModal from "./DiscardModal";
 import GameLog from "./GameLog";
 import DiceStatsModal from "./DiceStatsModal";
+import ResourceIcon from "./ResourceIcon";
 
 type RobberPurpose = "sevenRoll" | "knight";
 
@@ -83,10 +85,22 @@ export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardP
   const selectableEdges = useMemo(() => {
     const set = new Set<string>();
     if (!isCurrentPlayer) return set;
-    const isRoadTurn =
-      (ctx.phase === "setup" && stage === "road") ||
-      (ctx.phase === "play" && stage === "actions" && buildMode === "road");
-    if (!isRoadTurn) return set;
+
+    // During setup, a road must touch one of the player's settlements — it
+    // can't extend from an already-placed road the way it can in the "play"
+    // phase, since the server's placeInitialRoad move only checks buildings.
+    if (ctx.phase === "setup" && stage === "road") {
+      for (const [edgeId, edge] of Object.entries(G.board.edges)) {
+        if (G.roads[edgeId]) continue;
+        const touchesOwnSettlement = edge.vertexIds.some(
+          (v) => G.buildings[v]?.playerID === viewerID,
+        );
+        if (touchesOwnSettlement) set.add(edgeId);
+      }
+      return set;
+    }
+
+    if (!(ctx.phase === "play" && stage === "actions" && buildMode === "road")) return set;
     for (const [edgeId, edge] of Object.entries(G.board.edges)) {
       if (G.roads[edgeId]) continue;
       const touchesOwn = edge.vertexIds.some((v) => {
@@ -198,7 +212,7 @@ export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardP
           <ul>
             {Object.entries(G.players[viewerID].resources).map(([resource, amount]) => (
               <li key={resource}>
-                {resource}: {amount}
+                <ResourceIcon resource={resource as Resource} amount={amount} />
               </li>
             ))}
           </ul>
@@ -221,11 +235,17 @@ export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardP
           playerID={viewerID}
         />
 
-        {stage === "respondToTrade" && (
-          <button onClick={() => setTradeOpen(true)}>Voir les offres d'échange</button>
-        )}
+        <TradeOffers
+          G={G}
+          playerID={viewerID}
+          displayNames={displayNames}
+          onAccept={(id) => moves.acceptTrade(id)}
+          onReject={(id) => moves.rejectTrade(id)}
+          onFinalize={(id, withPlayerID) => moves.finalizeTrade(id, withPlayerID)}
+          onCancel={(id) => moves.cancelTrade(id)}
+        />
 
-        <GameLog log={G.log} />
+        <GameLog log={G.log} displayNames={displayNames} />
       </aside>
 
       {robberFlow && robberFlow.chosenTileId && (
@@ -268,13 +288,9 @@ export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardP
       {tradeOpen && (
         <TradeModal
           G={G}
-          displayNames={displayNames}
           playerID={viewerID}
           isCurrentPlayer={isCurrentPlayer}
           onOfferTrade={(give, want) => moves.offerTrade(give, want, [])}
-          onAcceptTrade={(id) => moves.acceptTrade(id)}
-          onRejectTrade={(id) => moves.rejectTrade(id)}
-          onCancelTrade={(id) => moves.cancelTrade(id)}
           onMaritimeTrade={(give, amount, receive) => moves.maritimeTrade(give, amount, receive)}
           onClose={() => setTradeOpen(false)}
         />

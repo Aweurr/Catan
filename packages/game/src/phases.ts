@@ -15,6 +15,7 @@ import {
 import {
   acceptTrade,
   cancelTrade,
+  finalizeTrade,
   maritimeTrade,
   offerTrade,
   rejectTrade,
@@ -74,6 +75,7 @@ export const phases: PhaseMap<GameState> = {
             playMonopoly,
             offerTrade,
             cancelTrade,
+            finalizeTrade,
             maritimeTrade,
             endTurn,
           },

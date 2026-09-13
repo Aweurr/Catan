@@ -42,7 +42,7 @@ export default function PlayerPanel({ G, currentPlayer, viewerPlayerID, displayN
             <div className="player-card-header">
               <span className="swatch" style={{ background: PLAYER_COLOR_HEX[player.color] }} />
               <strong>{displayNames[player.playerID] ?? player.name}</strong>
-              {player.playerID === currentPlayer && <span className="turn-badge">🎲 Son tour</span>}
+              {player.playerID === currentPlayer && <span className="turn-badge">🎲</span>}
             </div>
             <div className="player-card-stats">
               <span>PV: {vp}</span>

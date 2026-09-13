@@ -187,13 +187,8 @@ button.active {
 
 .turn-badge {
   margin-left: auto;
-  font-size: 11px;
-  font-weight: 700;
-  color: #8a5a00;
-  background: #fff3cd;
-  padding: 2px 8px;
-  border-radius: 10px;
-  white-space: nowrap;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .swatch {
@@ -343,12 +338,66 @@ button.active {
   gap: 8px;
 }
 
-.trade-offer {
-  display: flex;
+.resource-chip {
+  display: inline-flex;
   align-items: center;
+  gap: 3px;
+  font-weight: 600;
+}
+
+.resource-chip-label {
+  text-transform: capitalize;
+}
+
+.resource-picker-row {
+  display: flex;
+  gap: 4px;
+}
+
+.resource-picker-btn {
+  padding: 4px 6px;
+}
+
+.resource-picker-btn.selected {
+  background: #1565c0;
+  border-color: #1565c0;
+}
+
+.resource-picker-btn.selected .resource-chip {
+  color: white !important;
+}
+
+.trade-offers {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  padding: 6px 0;
-  border-bottom: 1px solid #eee;
+}
+
+.trade-offer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #ddd4bf;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.trade-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trade-arrow {
+  color: #999;
+}
+
+.trade-partners,
+.trade-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .dice-stats-button {

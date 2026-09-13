@@ -1,6 +1,7 @@
 import { INVALID_MOVE } from "boardgame.io/core";
 import type { Move } from "boardgame.io";
 import type { GameState, Resource } from "../types";
+import { logPlayer, logText } from "../log";
 
 function countBuildingsFor(G: GameState, playerID: string): number {
   return Object.values(G.buildings).filter((b) => b.playerID === playerID).length;
@@ -17,7 +18,7 @@ export const placeInitialSettlement: Move<GameState> = (
 
   G.buildings[vertexId] = { vertexId, playerID, type: "settlement" };
   G.players[playerID].settlementsLeft -= 1;
-  G.log.push(`${G.players[playerID].name} place sa colonie de départ.`);
+  G.log.push([logPlayer(playerID), logText(" place sa colonie de départ.")]);
 
   const isSecondSettlement = countBuildingsFor(G, playerID) === 2;
   if (isSecondSettlement) {
@@ -50,7 +51,7 @@ export const placeInitialRoad: Move<GameState> = (
 
   G.roads[edgeId] = { edgeId, playerID };
   G.players[playerID].roadsLeft -= 1;
-  G.log.push(`${G.players[playerID].name} place sa route de départ.`);
+  G.log.push([logPlayer(playerID), logText(" place sa route de départ.")]);
 
   G.setupStep += 1;
   events.endTurn();
