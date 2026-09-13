@@ -161,6 +161,35 @@ button.active {
   gap: 12px;
 }
 
+.game-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.game-sidebar-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.quit-button {
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: #c62828;
+  border-color: #c62828;
+}
+
+.quit-button:hover {
+  background: #c62828;
+  color: white;
+}
+
 .player-panel {
   display: flex;
   flex-direction: column;
@@ -234,12 +263,115 @@ button.active {
 .action-bar {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
 .action-bar-inactive {
   color: #666;
   font-style: italic;
+}
+
+.action-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.action-section:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.action-section h4 {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a8578;
+}
+
+.build-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.build-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 6px;
+  border-radius: 10px;
+}
+
+.build-button.active {
+  background: #1565c0;
+  border-color: #1565c0;
+  color: white;
+}
+
+.build-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.build-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.build-cost {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.build-button .resource-chip {
+  font-size: 11px;
+  gap: 1px;
+}
+
+.build-button.active .resource-chip {
+  color: white !important;
+}
+
+.play-card-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.play-card-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff3cd;
+  border-color: #b8860b;
+}
+
+.play-card-button:hover {
+  background: #ffe9a8;
+}
+
+.play-card-icon {
+  font-size: 16px;
+}
+
+.action-footer {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.action-footer button {
+  flex: 1;
 }
 
 .action-group {

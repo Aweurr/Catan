@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { BoardProps } from "boardgame.io/react";
 import type { GameState, PlayerColor, Resource } from "@catan/game";
 import HexBoard from "./board/HexBoard";
@@ -16,9 +17,11 @@ import MyDevCards from "./MyDevCards";
 type RobberPurpose = "sevenRoll" | "knight";
 
 export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardProps<GameState>) {
+  const navigate = useNavigate();
   const [buildMode, setBuildMode] = useState<BuildMode>(null);
   const [tradeOpen, setTradeOpen] = useState(false);
   const [diceStatsOpen, setDiceStatsOpen] = useState(false);
+  const [quitConfirmOpen, setQuitConfirmOpen] = useState(false);
   const [robberFlow, setRobberFlow] = useState<{
     purpose: RobberPurpose;
     chosenTileId: string | null;
@@ -207,6 +210,17 @@ export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardP
       </div>
 
       <aside className="game-sidebar">
+        <div className="game-sidebar-header">
+          <h2>Catan</h2>
+          <button
+            className="quit-button"
+            title="Quitter la partie"
+            onClick={() => setQuitConfirmOpen(true)}
+          >
+            ✕
+          </button>
+        </div>
+
         <PlayerPanel
           G={G}
           currentPlayer={ctx.currentPlayer}
@@ -307,11 +321,29 @@ export default function GameBoard({ G, ctx, moves, playerID, matchData }: BoardP
         <DiceStatsModal counts={G.diceRollCounts} onClose={() => setDiceStatsOpen(false)} />
       )}
 
+      {quitConfirmOpen && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h2>Quitter la partie ?</h2>
+            <p>Tu pourras revenir avec le même lien pour rejoindre à nouveau la partie.</p>
+            <div className="action-group">
+              <button onClick={() => setQuitConfirmOpen(false)}>Annuler</button>
+              <button className="primary" onClick={() => navigate("/")}>
+                Quitter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {ctx.gameover && (
         <div className="modal-backdrop">
           <div className="modal">
             <h2>Partie terminée</h2>
             <p>{displayNames[(ctx.gameover as { winnerID: string }).winnerID]} remporte la partie !</p>
+            <button className="primary" onClick={() => navigate("/")}>
+              Retour au menu principal
+            </button>
           </div>
         </div>
       )}
