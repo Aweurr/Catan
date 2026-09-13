@@ -1,5 +1,5 @@
-import type { GameState, PlayerColor, TerrainType } from "@catan/game";
-import { PLAYER_COLOR_HEX, TERRAIN_COLOR } from "../../theme";
+import type { GameState, PlayerColor, PortType, TerrainType } from "@catan/game";
+import { PLAYER_COLOR_HEX, RESOURCE_ICON, TERRAIN_COLOR } from "../../theme";
 import woodImg from "../../assets/tiles/wood.jpg";
 import brickImg from "../../assets/tiles/brick.jpg";
 import sheepImg from "../../assets/tiles/sheep.jpg";
@@ -42,6 +42,25 @@ const SETTLEMENT_PATH = "M -8,9 L -8,0 L 0,-8 L 8,0 L 8,9 Z";
 /** A wider, taller twin-peak building silhouette, used for cities — visibly
  * bigger and more complex than a settlement so the two are easy to tell apart. */
 const CITY_PATH = "M -13,9 L -13,-1 L -6,-9 L 0,-3 L 6,-9 L 13,-1 L 13,9 Z";
+
+/** A small dock sign at a port vertex: a post planted at the shore holding a
+ * placard with the traded resource (or an anchor for a generic 3:1 port) and
+ * its rate, instead of plain floating text. */
+function PortMarker({ x, y, port }: { x: number; y: number; port: PortType }) {
+  const isGeneric = port === "generic";
+  return (
+    <g transform={`translate(${x},${y})`} style={{ pointerEvents: "none" }}>
+      <line x1={0} y1={-4} x2={0} y2={-22} stroke="#6d4c41" strokeWidth={3} strokeLinecap="round" />
+      <circle cx={0} cy={-30} r={14} fill="#eaf6ff" stroke="#0d3d66" strokeWidth={2} />
+      <text x={0} y={-26} textAnchor="middle" fontSize={13}>
+        {isGeneric ? "⚓" : RESOURCE_ICON[port]}
+      </text>
+      <text x={0} y={-17} textAnchor="middle" fontSize={7} fontWeight={700} fill="#3e2f1c">
+        {isGeneric ? "3:1" : "2:1"}
+      </text>
+    </g>
+  );
+}
 
 export default function HexBoard({
   G,
@@ -159,17 +178,7 @@ export default function HexBoard({
         const selectable = selectableVertices.has(vertex.id);
         return (
           <g key={vertex.id}>
-            {vertex.port && !building && (
-              <text
-                x={vertex.x}
-                y={vertex.y - 14}
-                textAnchor="middle"
-                fontSize={10}
-                fill="#1565c0"
-              >
-                {vertex.port === "generic" ? "3:1" : `2:1 ${vertex.port}`}
-              </text>
-            )}
+            {vertex.port && !building && <PortMarker x={vertex.x} y={vertex.y} port={vertex.port} />}
             {building ? (
               <g
                 transform={`translate(${vertex.x},${vertex.y})`}
