@@ -53,6 +53,7 @@ function fakeState(vertexPorts: Record<string, string | null>, buildingOwner = "
     longestRoadPlayerID: null,
     largestArmyPlayerID: null,
     lastDiceRoll: null,
+    diceRollCounts: {},
     trades: [],
     pendingDiscards: {},
     log: [],

@@ -1,3 +1,5 @@
+import type { LogEntry } from "./log";
+
 export type Resource = "wood" | "brick" | "sheep" | "wheat" | "ore";
 
 export const RESOURCES: Resource[] = ["wood", "brick", "sheep", "wheat", "ore"];
@@ -113,6 +115,10 @@ export interface TradeOffer {
   give: Partial<ResourceHand>;
   want: Partial<ResourceHand>;
   status: TradeStatus;
+  /** Players willing to accept these terms; the offerer picks one to finalize with. */
+  interestedPlayerIDs: string[];
+  /** Players who declined; kept so the UI can stop showing them the offer. */
+  declinedPlayerIDs: string[];
 }
 
 export interface Board {
@@ -133,11 +139,13 @@ export interface GameState {
   longestRoadPlayerID: string | null;
   largestArmyPlayerID: string | null;
   lastDiceRoll: [number, number] | null;
+  /** How many times each dice total (2-12) has been rolled this game. */
+  diceRollCounts: Record<number, number>;
   trades: TradeOffer[];
   /** Players who still need to discard after a 7 roll, mapped to how many cards they must discard. */
   pendingDiscards: Record<string, number>;
-  /** Log of human-readable events for the game log UI. */
-  log: string[];
+  /** Structured log of events for the game log UI (see log.ts). */
+  log: LogEntry[];
   /** Snake order (playOrder positions) for the initial placement phase, e.g. [0,1,2,2,1,0]. */
   setupOrder: number[];
   /** Index into setupOrder for the turn currently being played. */

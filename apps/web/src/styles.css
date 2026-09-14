@@ -128,7 +128,8 @@ button.active {
 
 .tile.selectable,
 .edge.selectable,
-.vertex.selectable {
+.vertex.selectable,
+.building.selectable {
   cursor: pointer;
 }
 
@@ -138,6 +139,10 @@ button.active {
 
 .vertex.selectable:hover {
   opacity: 1;
+}
+
+.building.selectable:hover path {
+  filter: brightness(1.2);
 }
 
 .dice-readout {
@@ -161,6 +166,35 @@ button.active {
   gap: 12px;
 }
 
+.game-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.game-sidebar-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.quit-button {
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: #c62828;
+  border-color: #c62828;
+}
+
+.quit-button:hover {
+  background: #c62828;
+  color: white;
+}
+
 .player-panel {
   display: flex;
   flex-direction: column;
@@ -175,12 +209,20 @@ button.active {
 
 .player-card.active {
   background: #fff8e1;
+  border-color: #f9a825;
+  box-shadow: 0 0 0 2px #f9a825;
 }
 
 .player-card-header {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.turn-badge {
+  margin-left: auto;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .swatch {
@@ -226,12 +268,115 @@ button.active {
 .action-bar {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
 .action-bar-inactive {
   color: #666;
   font-style: italic;
+}
+
+.action-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.action-section:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.action-section h4 {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a8578;
+}
+
+.build-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.build-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 6px;
+  border-radius: 10px;
+}
+
+.build-button.active {
+  background: #1565c0;
+  border-color: #1565c0;
+  color: white;
+}
+
+.build-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.build-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.build-cost {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.build-button .resource-chip {
+  font-size: 11px;
+  gap: 1px;
+}
+
+.build-button.active .resource-chip {
+  color: white !important;
+}
+
+.play-card-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.play-card-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff3cd;
+  border-color: #b8860b;
+}
+
+.play-card-button:hover {
+  background: #ffe9a8;
+}
+
+.play-card-icon {
+  font-size: 16px;
+}
+
+.action-footer {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.action-footer button {
+  flex: 1;
 }
 
 .action-group {
@@ -330,10 +475,220 @@ button.active {
   gap: 8px;
 }
 
-.trade-offer {
+.resource-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 600;
+}
+
+.resource-chip-label {
+  text-transform: capitalize;
+}
+
+.resource-picker-row {
+  display: flex;
+  gap: 4px;
+}
+
+.resource-picker-btn {
+  padding: 4px 6px;
+}
+
+.resource-picker-btn.selected {
+  background: #1565c0;
+  border-color: #1565c0;
+}
+
+.resource-picker-btn.selected .resource-chip {
+  color: white !important;
+}
+
+.trade-offers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trade-offer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #ddd4bf;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.trade-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trade-arrow {
+  color: #999;
+}
+
+.trade-partners,
+.trade-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dice-stats-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.dice-stats-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 200px;
+  margin-top: 16px;
+}
+
+.dice-stats-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 4px;
+}
+
+.dice-stats-count {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dice-stats-fill {
+  width: 100%;
+  background: #1565c0;
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+}
+
+.dice-stats-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.seat-list li {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 6px 0;
-  border-bottom: 1px solid #eee;
+}
+
+.ready-badge {
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+}
+
+.ready-badge.ready {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.lobby-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.dev-card-stack {
+  position: absolute;
+  top: 60px;
+  right: 12px;
+  width: 52px;
+  height: 72px;
+}
+
+.dev-card-back {
+  position: absolute;
+  width: 52px;
+  height: 72px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #4a2f7a, #2e1a52);
+  border: 2px solid #f5ecd7;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dev-card-back-3 {
+  transform: translate(4px, 4px);
+}
+
+.dev-card-back-2 {
+  transform: translate(2px, 2px);
+}
+
+.dev-card-back-1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dev-card-count {
+  color: #f5ecd7;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.my-dev-cards {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 60%;
+}
+
+.dev-card-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid #23201a;
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-width: 64px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.dev-card-face-icon {
+  font-size: 20px;
+}
+
+.dev-card-face-label {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.dev-card-face-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #1565c0;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

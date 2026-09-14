@@ -1,5 +1,11 @@
-import type { GameState, PlayerColor } from "@catan/game";
-import { PLAYER_COLOR_HEX, TERRAIN_COLOR } from "../../theme";
+import type { GameState, PlayerColor, PortType, TerrainType } from "@catan/game";
+import { PLAYER_COLOR_HEX, RESOURCE_ICON, TERRAIN_COLOR } from "../../theme";
+import woodImg from "../../assets/tiles/wood.png";
+import brickImg from "../../assets/tiles/brick.png";
+import sheepImg from "../../assets/tiles/sheep.png";
+import wheatImg from "../../assets/tiles/wheat.png";
+import oreImg from "../../assets/tiles/ore.png";
+import desertImg from "../../assets/tiles/desert.png";
 
 interface Props {
   G: GameState;
@@ -14,6 +20,61 @@ interface Props {
 
 function isRedNumber(n: number): boolean {
   return n === 6 || n === 8;
+}
+
+/** Illustrated artwork for each terrain, used instead of a flat color fill. */
+const TERRAIN_IMAGE: Record<TerrainType, string> = {
+  wood: woodImg,
+  brick: brickImg,
+  sheep: sheepImg,
+  wheat: wheatImg,
+  ore: oreImg,
+  desert: desertImg,
+};
+
+// Matches HEX_SIZE (the circumradius) in packages/game/src/board.ts, so this
+// bounding box lines up exactly with a tile's own polygon.
+const HEX_HALF_WIDTH = 100 * (Math.sqrt(3) / 2);
+
+/** A single-peak house silhouette, used for settlements. */
+const SETTLEMENT_PATH = "M -8,9 L -8,0 L 0,-8 L 8,0 L 8,9 Z";
+
+/** A wider, taller twin-peak building silhouette, used for cities — visibly
+ * bigger and more complex than a settlement so the two are easy to tell apart. */
+const CITY_PATH = "M -13,9 L -13,-1 L -6,-9 L 0,-3 L 6,-9 L 13,-1 L 13,9 Z";
+
+/** A port marker: a little tag dangling on a string from the coastal edge it
+ * belongs to, showing the traded resource (or an anchor for a generic 3:1
+ * port) and its rate — like a luggage tag tied to the shore. */
+function PortMarker({
+  edgeX,
+  edgeY,
+  tagX,
+  tagY,
+  port,
+}: {
+  edgeX: number;
+  edgeY: number;
+  tagX: number;
+  tagY: number;
+  port: PortType;
+}) {
+  const isGeneric = port === "generic";
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      <line x1={edgeX} y1={edgeY} x2={tagX} y2={tagY - 11} stroke="#6d4c41" strokeWidth={2} strokeLinecap="round" />
+      <g transform={`translate(${tagX},${tagY})`}>
+        <rect x={-16} y={-14} width={32} height={26} rx={6} fill="#eaf6ff" stroke="#0d3d66" strokeWidth={2} />
+        <circle cx={0} cy={-10} r={2} fill="none" stroke="#0d3d66" strokeWidth={1.5} />
+        <text x={0} y={3} textAnchor="middle" fontSize={12}>
+          {isGeneric ? "⚓" : RESOURCE_ICON[port]}
+        </text>
+        <text x={0} y={14} textAnchor="middle" fontSize={7} fontWeight={700} fill="#3e2f1c">
+          {isGeneric ? "3:1" : "2:1"}
+        </text>
+      </g>
+    </g>
+  );
 }
 
 export default function HexBoard({
@@ -42,6 +103,15 @@ export default function HexBoard({
       viewBox={`${minX} ${minY} ${width} ${height}`}
       xmlns="http://www.w3.org/2000/svg"
     >
+      <defs>
+        <clipPath id="hex-clip" clipPathUnits="userSpaceOnUse">
+          <polygon points="86.6,-50 86.6,50 0,100 -86.6,50 -86.6,-50 0,-100" />
+        </clipPath>
+        <filter id="building-shadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodOpacity={0.5} />
+        </filter>
+      </defs>
+
       {board.tiles.map((tile) => {
         const points = tile.vertexIds
           .map((vId) => board.vertices[vId])
@@ -65,6 +135,18 @@ export default function HexBoard({
               className={selectable ? "tile selectable" : "tile"}
               onClick={selectable ? () => onTileClick?.(tile.id) : undefined}
             />
+            <g transform={`translate(${center.x},${center.y})`} style={{ pointerEvents: "none" }}>
+              <g clipPath="url(#hex-clip)">
+                <image
+                  href={TERRAIN_IMAGE[tile.terrain]}
+                  x={-HEX_HALF_WIDTH}
+                  y={-100}
+                  width={HEX_HALF_WIDTH * 2}
+                  height={200}
+                  preserveAspectRatio="xMidYMid slice"
+                />
+              </g>
+            </g>
             {tile.number !== null && (
               <g>
                 <circle cx={center.x} cy={center.y} r={22} fill="#f5ecd7" stroke="#1b1b1b" />
@@ -107,33 +189,70 @@ export default function HexBoard({
         );
       })}
 
+      {Object.values(board.edges).map((edge) => {
+        // A port belongs to a single coastal edge, but is stored on both of
+        // that edge's vertices (see assignPorts in packages/game/src/board.ts)
+        // — so a boundary edge whose two vertices agree on the same port is
+        // exactly the edge the port sits on.
+        if (edge.tileIds.length !== 1) return null;
+        const [a, b] = edge.vertexIds.map((id) => board.vertices[id]);
+        if (!a.port || a.port !== b.port) return null;
+
+        const tile = board.tiles.find((t) => t.id === edge.tileIds[0]);
+        if (!tile) return null;
+        const tileCenter = tile.vertexIds
+          .map((vId) => board.vertices[vId])
+          .reduce((acc, v) => ({ x: acc.x + v.x / 6, y: acc.y + v.y / 6 }), { x: 0, y: 0 });
+
+        const edgeX = (a.x + b.x) / 2;
+        const edgeY = (a.y + b.y) / 2;
+        // Point away from the tile, out to sea, so the tag dangles off the
+        // coast instead of overlapping the board.
+        const dx = edgeX - tileCenter.x;
+        const dy = edgeY - tileCenter.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const ropeLength = 34;
+        const tagX = edgeX + (dx / len) * ropeLength;
+        const tagY = edgeY + (dy / len) * ropeLength;
+
+        return (
+          <PortMarker key={edge.id} edgeX={edgeX} edgeY={edgeY} tagX={tagX} tagY={tagY} port={a.port} />
+        );
+      })}
+
       {vertexList.map((vertex) => {
         const building = G.buildings[vertex.id];
         const selectable = selectableVertices.has(vertex.id);
         return (
           <g key={vertex.id}>
-            {vertex.port && !building && (
-              <text
-                x={vertex.x}
-                y={vertex.y - 14}
-                textAnchor="middle"
-                fontSize={10}
-                fill="#1565c0"
+            {building ? (
+              <g
+                transform={`translate(${vertex.x},${vertex.y})`}
+                filter="url(#building-shadow)"
+                className={selectable ? "building selectable" : "building"}
+                onClick={selectable ? () => onVertexClick?.(vertex.id) : undefined}
               >
-                {vertex.port === "generic" ? "3:1" : `2:1 ${vertex.port}`}
-              </text>
+                <path
+                  d={building.type === "city" ? CITY_PATH : SETTLEMENT_PATH}
+                  fill={PLAYER_COLOR_HEX[playerColors[building.playerID]]}
+                  stroke={selectable ? "#f9a825" : "#1b1b1b"}
+                  strokeWidth={selectable ? 3 : 2}
+                  strokeLinejoin="round"
+                />
+              </g>
+            ) : (
+              <circle
+                cx={vertex.x}
+                cy={vertex.y}
+                r={selectable ? 9 : 5}
+                fill="#ffffff"
+                stroke="#1b1b1b"
+                strokeWidth={1}
+                opacity={selectable ? 0.95 : 0.25}
+                className={selectable ? "vertex selectable" : "vertex"}
+                onClick={selectable ? () => onVertexClick?.(vertex.id) : undefined}
+              />
             )}
-            <circle
-              cx={vertex.x}
-              cy={vertex.y}
-              r={building ? (building.type === "city" ? 12 : 9) : selectable ? 9 : 5}
-              fill={building ? PLAYER_COLOR_HEX[playerColors[building.playerID]] : "#ffffff"}
-              stroke="#1b1b1b"
-              strokeWidth={building ? 2 : 1}
-              opacity={building ? 1 : selectable ? 0.95 : 0.25}
-              className={selectable ? "vertex selectable" : "vertex"}
-              onClick={selectable ? () => onVertexClick?.(vertex.id) : undefined}
-            />
           </g>
         );
       })}

@@ -74,6 +74,9 @@ export function createInitialState(
   const forward = playerIDs.map((_, i) => i);
   const setupOrder = [...forward, ...forward.slice().reverse()];
 
+  const diceRollCounts: Record<number, number> = {};
+  for (let total = 2; total <= 12; total++) diceRollCounts[total] = 0;
+
   return {
     numPlayers,
     board,
@@ -85,6 +88,7 @@ export function createInitialState(
     longestRoadPlayerID: null,
     largestArmyPlayerID: null,
     lastDiceRoll: null,
+    diceRollCounts,
     trades: [],
     pendingDiscards: {},
     log: [],

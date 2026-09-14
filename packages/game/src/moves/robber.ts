@@ -2,6 +2,7 @@ import { INVALID_MOVE } from "boardgame.io/core";
 import type { Move } from "boardgame.io";
 import type { GameState, Resource } from "../types";
 import { RESOURCES } from "../types";
+import { logPlayer, logText } from "../log";
 
 function totalHandSize(state: GameState, playerID: string): number {
   return Object.values(state.players[playerID].resources).reduce(
@@ -36,7 +37,7 @@ export const discardResources: Move<GameState> = (
     G.bank[resource] += amount;
   }
   delete G.pendingDiscards[playerID];
-  G.log.push(`${G.players[playerID].name} défausse ${required} carte(s).`);
+  G.log.push([logPlayer(playerID), logText(` défausse ${required} carte(s).`)]);
 };
 
 function tileNeighborsPlayerBuilding(
@@ -63,7 +64,7 @@ export function applyMoveRobberAndSteal(
   if (tileId === G.board.robberTileId) return INVALID_MOVE;
 
   G.board.robberTileId = tileId;
-  G.log.push(`${G.players[playerID].name} déplace le voleur.`);
+  G.log.push([logPlayer(playerID), logText(" déplace le voleur.")]);
 
   if (victimPlayerID) {
     if (victimPlayerID === playerID) return INVALID_MOVE;
@@ -79,9 +80,12 @@ export function applyMoveRobberAndSteal(
       const stolen = pool[Math.floor(randomNumber() * pool.length)];
       victimHand[stolen] -= 1;
       G.players[playerID].resources[stolen] += 1;
-      G.log.push(
-        `${G.players[playerID].name} vole une carte à ${G.players[victimPlayerID].name}.`,
-      );
+      G.log.push([
+        logPlayer(playerID),
+        logText(" vole une carte à "),
+        logPlayer(victimPlayerID),
+        logText("."),
+      ]);
     }
   }
 }

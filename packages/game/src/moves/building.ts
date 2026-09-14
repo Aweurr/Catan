@@ -1,6 +1,7 @@
 import { INVALID_MOVE } from "boardgame.io/core";
 import type { Move } from "boardgame.io";
 import { RESOURCE_COST, type GameState } from "../types";
+import { logPlayer, logText } from "../log";
 import { updateLongestRoad } from "../rules/longestRoad";
 import { checkWinCondition } from "../rules/winCheck";
 
@@ -63,7 +64,7 @@ export const buildRoad: Move<GameState> = ({ G, playerID, events }, edgeId: stri
   }
   G.roads[edgeId] = { edgeId, playerID };
   G.players[playerID].roadsLeft -= 1;
-  G.log.push(`${G.players[playerID].name} construit une route.`);
+  G.log.push([logPlayer(playerID), logText(" construit une route.")]);
 
   updateLongestRoad(G);
   checkWinCondition({ G, events });
@@ -82,7 +83,7 @@ export const buildSettlement: Move<GameState> = (
   pay(G, playerID, RESOURCE_COST.settlement);
   G.buildings[vertexId] = { vertexId, playerID, type: "settlement" };
   G.players[playerID].settlementsLeft -= 1;
-  G.log.push(`${G.players[playerID].name} construit une colonie.`);
+  G.log.push([logPlayer(playerID), logText(" construit une colonie.")]);
 
   updateLongestRoad(G);
   checkWinCondition({ G, events });
@@ -100,7 +101,7 @@ export const buildCity: Move<GameState> = ({ G, playerID, events }, vertexId: st
   building.type = "city";
   G.players[playerID].citiesLeft -= 1;
   G.players[playerID].settlementsLeft += 1;
-  G.log.push(`${G.players[playerID].name} construit une ville.`);
+  G.log.push([logPlayer(playerID), logText(" construit une ville.")]);
 
   checkWinCondition({ G, events });
 };

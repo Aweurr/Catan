@@ -1,5 +1,6 @@
 import type { Move } from "boardgame.io";
-import type { GameState } from "../types";
+import type { GameState, Resource, ResourceHand } from "../types";
+import { logPlayer, logResource, logText, type LogPart } from "../log";
 import { computeProduction, applyProduction } from "../rules/production";
 
 function totalHandSize(state: GameState, playerID: string): number {
@@ -14,7 +15,8 @@ export const rollDice: Move<GameState> = ({ G, random, events }) => {
   const d2 = random.Die(6);
   const total = d1 + d2;
   G.lastDiceRoll = [d1, d2];
-  G.log.push(`Dés : ${d1} + ${d2} = ${total}.`);
+  G.diceRollCounts[total] = (G.diceRollCounts[total] ?? 0) + 1;
+  G.log.push([logText(`Dés : ${d1} + ${d2} = ${total}.`)]);
 
   if (total === 7) {
     const overLimit = Object.keys(G.players).filter(
@@ -43,10 +45,29 @@ export const rollDice: Move<GameState> = ({ G, random, events }) => {
 
   const { gains, shortages } = computeProduction(G, total);
   applyProduction(G, gains);
+
+  const gainsByPlayer = new Map<string, Partial<ResourceHand>>();
+  for (const gain of gains) {
+    const bucket = gainsByPlayer.get(gain.playerID) ?? {};
+    bucket[gain.resource] = (bucket[gain.resource] ?? 0) + gain.amount;
+    gainsByPlayer.set(gain.playerID, bucket);
+  }
+  for (const [playerID, resources] of gainsByPlayer) {
+    const entries = Object.entries(resources) as [Resource, number][];
+    const parts: LogPart[] = [logPlayer(playerID), logText(" reçoit ")];
+    entries.forEach(([resource, amount], i) => {
+      parts.push(logResource(resource, amount));
+      parts.push(logText(i < entries.length - 1 ? ", " : "."));
+    });
+    G.log.push(parts);
+  }
+
   for (const resource of shortages) {
-    G.log.push(
-      `Pas assez de ${resource} dans la banque : personne ne reçoit cette ressource ce tour-ci.`,
-    );
+    G.log.push([
+      logText("Pas assez de "),
+      logResource(resource),
+      logText(" dans la banque : personne ne reçoit cette ressource ce tour-ci."),
+    ]);
   }
 
   events.setActivePlayers({ currentPlayer: "actions", others: "respondToTrade" });

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "catan-web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@catan/web", "dev"],
+      "port": 5173
+    }
+  ]
+}

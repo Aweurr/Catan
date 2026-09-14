@@ -1,6 +1,7 @@
 import { INVALID_MOVE } from "boardgame.io/core";
 import type { Move } from "boardgame.io";
 import { RESOURCE_COST, type DevCardType, type GameState, type Resource } from "../types";
+import { logPlayer, logResource, logText } from "../log";
 import { updateLargestArmy } from "../rules/largestArmy";
 import { checkWinCondition } from "../rules/winCheck";
 import { applyMoveRobberAndSteal } from "./robber";
@@ -11,14 +12,23 @@ export const buyDevCard: Move<GameState> = ({ G, playerID, events }) => {
   if (!canAfford(G, playerID, RESOURCE_COST.devCard)) return INVALID_MOVE;
 
   pay(G, playerID, RESOURCE_COST.devCard);
-  const card = G.devCardDeck.pop() as DevCardType;
-  const player = G.players[playerID];
-  if (card === "victoryPoint") {
-    player.devCards.push(card);
-  } else {
-    player.devCardsBoughtThisTurn.push(card);
+
+  // On the client, boardgame.io runs moves optimistically against the
+  // player-view-filtered state, where devCardDeck is replaced by `{ length }`
+  // (to hide its draw order) instead of the real array — draw order is
+  // secret, so the client can't know which card comes up next. Skip the draw
+  // locally in that case; the authoritative server-side run always has the
+  // real deck and its broadcast state corrects the client's view right after.
+  if (Array.isArray(G.devCardDeck)) {
+    const card = G.devCardDeck.pop() as DevCardType;
+    const player = G.players[playerID];
+    if (card === "victoryPoint") {
+      player.devCards.push(card);
+    } else {
+      player.devCardsBoughtThisTurn.push(card);
+    }
   }
-  G.log.push(`${player.name} achète une carte développement.`);
+  G.log.push([logPlayer(playerID), logText(" achète une carte développement.")]);
 
   checkWinCondition({ G, events });
 };
@@ -52,7 +62,7 @@ export const playKnight: Move<GameState> = (
   if (result === INVALID_MOVE) return INVALID_MOVE;
 
   G.players[playerID].knightsPlayed += 1;
-  G.log.push(`${G.players[playerID].name} joue un chevalier.`);
+  G.log.push([logPlayer(playerID), logText(" joue un chevalier.")]);
   updateLargestArmy(G);
   checkWinCondition({ G, events });
 };
@@ -60,7 +70,7 @@ export const playKnight: Move<GameState> = (
 export const playRoadBuilding: Move<GameState> = ({ G, playerID }) => {
   if (!takePlayableCard(G, playerID, "roadBuilding")) return INVALID_MOVE;
   G.freeRoadsRemaining += Math.min(2, G.players[playerID].roadsLeft);
-  G.log.push(`${G.players[playerID].name} joue Construction de route.`);
+  G.log.push([logPlayer(playerID), logText(" joue Construction de route.")]);
 };
 
 export const playYearOfPlenty: Move<GameState> = (
@@ -74,7 +84,14 @@ export const playYearOfPlenty: Move<GameState> = (
     G.bank[resource] -= 1;
     G.players[playerID].resources[resource] += 1;
   }
-  G.log.push(`${G.players[playerID].name} joue Année d'abondance.`);
+  G.log.push([
+    logPlayer(playerID),
+    logText(" joue Année d'abondance et pioche "),
+    logResource(resourceA),
+    logText(", "),
+    logResource(resourceB),
+    logText("."),
+  ]);
 };
 
 export const playMonopoly: Move<GameState> = (
@@ -90,7 +107,10 @@ export const playMonopoly: Move<GameState> = (
     total += amount;
   }
   G.players[playerID].resources[resource] += total;
-  G.log.push(
-    `${G.players[playerID].name} joue Monopole sur ${resource} et récupère ${total} carte(s).`,
-  );
+  G.log.push([
+    logPlayer(playerID),
+    logText(" joue Monopole sur "),
+    logResource(resource),
+    logText(` et récupère ${total} carte(s).`),
+  ]);
 };

@@ -54,6 +54,7 @@ export const CatanGame: Game<GameState, Record<string, unknown>, CatanSetupData>
 
 export type { GameState };
 export * from "./types";
+export * from "./log";
 export { buildBoard } from "./board";
 export { publicVictoryPoints, totalVictoryPoints } from "./rules/victoryPoints";
 export { bestRateFor } from "./rules/bank";
