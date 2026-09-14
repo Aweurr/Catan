@@ -43,28 +43,36 @@ const SETTLEMENT_PATH = "M -8,9 L -8,0 L 0,-8 L 8,0 L 8,9 Z";
  * bigger and more complex than a settlement so the two are easy to tell apart. */
 const CITY_PATH = "M -13,9 L -13,-1 L -6,-9 L 0,-3 L 6,-9 L 13,-1 L 13,9 Z";
 
-/** A triangular marker dropped on a coastal edge to flag a port: a small
- * pennant shape holding the traded resource (or an anchor for a generic 3:1
- * port) and its rate. */
-const PORT_TRIANGLE_POINTS = "0,-16 -15,11 15,11";
-
-function PortMarker({ x, y, port }: { x: number; y: number; port: PortType }) {
+/** A port marker: a little tag dangling on a string from the coastal edge it
+ * belongs to, showing the traded resource (or an anchor for a generic 3:1
+ * port) and its rate — like a luggage tag tied to the shore. */
+function PortMarker({
+  edgeX,
+  edgeY,
+  tagX,
+  tagY,
+  port,
+}: {
+  edgeX: number;
+  edgeY: number;
+  tagX: number;
+  tagY: number;
+  port: PortType;
+}) {
   const isGeneric = port === "generic";
   return (
-    <g transform={`translate(${x},${y})`} style={{ pointerEvents: "none" }}>
-      <polygon
-        points={PORT_TRIANGLE_POINTS}
-        fill="#eaf6ff"
-        stroke="#0d3d66"
-        strokeWidth={2}
-        strokeLinejoin="round"
-      />
-      <text x={0} y={2} textAnchor="middle" fontSize={12}>
-        {isGeneric ? "⚓" : RESOURCE_ICON[port]}
-      </text>
-      <text x={0} y={26} textAnchor="middle" fontSize={7} fontWeight={700} fill="#3e2f1c">
-        {isGeneric ? "3:1" : "2:1"}
-      </text>
+    <g style={{ pointerEvents: "none" }}>
+      <line x1={edgeX} y1={edgeY} x2={tagX} y2={tagY - 11} stroke="#6d4c41" strokeWidth={2} strokeLinecap="round" />
+      <g transform={`translate(${tagX},${tagY})`}>
+        <rect x={-16} y={-14} width={32} height={26} rx={6} fill="#eaf6ff" stroke="#0d3d66" strokeWidth={2} />
+        <circle cx={0} cy={-10} r={2} fill="none" stroke="#0d3d66" strokeWidth={1.5} />
+        <text x={0} y={3} textAnchor="middle" fontSize={12}>
+          {isGeneric ? "⚓" : RESOURCE_ICON[port]}
+        </text>
+        <text x={0} y={14} textAnchor="middle" fontSize={7} fontWeight={700} fill="#3e2f1c">
+          {isGeneric ? "3:1" : "2:1"}
+        </text>
+      </g>
     </g>
   );
 }
@@ -189,8 +197,26 @@ export default function HexBoard({
         if (edge.tileIds.length !== 1) return null;
         const [a, b] = edge.vertexIds.map((id) => board.vertices[id]);
         if (!a.port || a.port !== b.port) return null;
+
+        const tile = board.tiles.find((t) => t.id === edge.tileIds[0]);
+        if (!tile) return null;
+        const tileCenter = tile.vertexIds
+          .map((vId) => board.vertices[vId])
+          .reduce((acc, v) => ({ x: acc.x + v.x / 6, y: acc.y + v.y / 6 }), { x: 0, y: 0 });
+
+        const edgeX = (a.x + b.x) / 2;
+        const edgeY = (a.y + b.y) / 2;
+        // Point away from the tile, out to sea, so the tag dangles off the
+        // coast instead of overlapping the board.
+        const dx = edgeX - tileCenter.x;
+        const dy = edgeY - tileCenter.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const ropeLength = 34;
+        const tagX = edgeX + (dx / len) * ropeLength;
+        const tagY = edgeY + (dy / len) * ropeLength;
+
         return (
-          <PortMarker key={edge.id} x={(a.x + b.x) / 2} y={(a.y + b.y) / 2} port={a.port} />
+          <PortMarker key={edge.id} edgeX={edgeX} edgeY={edgeY} tagX={tagX} tagY={tagY} port={a.port} />
         );
       })}
 
